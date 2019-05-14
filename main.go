@@ -29,8 +29,12 @@ func login(w http.ResponseWriter, r *http.Request) {
 		t.Execute(w, nil)
 	} else {
 		r.ParseForm()
-		fmt.Println("Username: ", r.Form["username"])
-		fmt.Println("Password: ", r.Form["password"])
+		if len(r.Form["username"][0]) == 0 || len(r.Form["password"][0]) == 0 {
+			fmt.Fprintf(w, "Username or Password empty!")
+		} else {
+			fmt.Println("Username: ", r.Form["username"])
+			fmt.Println("Password: ", r.Form["password"])
+		}
 	}
 }
 

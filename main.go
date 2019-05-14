@@ -1,11 +1,15 @@
 package main
 
 import (
+	"crypto/md5"
 	"fmt"
 	"html/template"
+	"io"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
+	"time"
 )
 
 func sayHelloName(w http.ResponseWriter, r *http.Request) {
@@ -25,15 +29,27 @@ func sayHelloName(w http.ResponseWriter, r *http.Request) {
 func login(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Method: ", r.Method)
 	if r.Method == "GET" {
+		currentTime := time.Now().Unix()
+		h := md5.New()
+		io.WriteString(h, strconv.FormatInt(currentTime, 10))
+		token := fmt.Sprintf("%x", h.Sum(nil))
+
 		t, _ := template.ParseFiles("login.gtpl")
-		t.Execute(w, nil)
+		t.Execute(w, token)
 	} else {
 		r.ParseForm()
-		if len(r.Form["username"][0]) == 0 || len(r.Form["password"][0]) == 0 {
-			fmt.Fprintf(w, "Username or Password empty!")
+		token := r.Form.Get("token")
+		if token != "" {
+			// check token validity
+			if len(r.Form["username"][0]) == 0 || len(r.Form["password"][0]) == 0 {
+				fmt.Fprintf(w, "Username or Password empty!")
+			} else {
+				fmt.Println("Username: ", template.HTMLEscapeString(r.Form.Get("username")))
+				fmt.Println("Password: ", template.HTMLEscapeString(r.Form.Get("password")))
+			}
 		} else {
-			fmt.Println("Username: ", r.Form["username"])
-			fmt.Println("Password: ", r.Form["password"])
+			// give error if no token
+			fmt.Fprintf(w, "Token not received!")
 		}
 	}
 }
